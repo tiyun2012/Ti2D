@@ -7,7 +7,7 @@ var Board = (function() {
      ctx: null,
      domMem: null,
      ctxMem: null,
-     bgColor: '#ffffff',  // Original white background
+     bgColor: '#ffffff',
      pos: {
        x: 0,
        y: 0
@@ -32,6 +32,10 @@ var Board = (function() {
        this.ctxMem.fillStyle = this.bgColor;
        this.ctxMem.fillRect(0, 0, this.domMem.width, this.domMem.height);
 
+       // Update: Removed dynamic resizing
+       // fitToWindow.bind(this)(); 
+       // window.addEventListener('resize', fitToWindow.bind(this));
+
        // Load canvas from local storage
        if (localStorage.dataURL) {
          var img = new window.Image();
@@ -40,13 +44,11 @@ var Board = (function() {
        }
      },
      getPointerPos: function getPointerPos(event) {
-      const rect = this.dom.getBoundingClientRect();  // Get the canvas's exact position relative to the viewport
-      return {
-        x: event.clientX - rect.left,  // Adjust the pen's position based on the bounding rectangle
-        y: event.clientY - rect.top    // Align based on client coordinates relative to the canvas
-      };
-    },
-    
+       return {
+         x: event.pageX - this.pos.x,
+         y: event.pageY - this.pos.y
+       }
+     },
      storeMemory: function storeMemory() {
        this.ctxMem.drawImage(this.dom, 0, 0);
        localStorage.setItem('dataURL', this.domMem.toDataURL());
@@ -61,6 +63,9 @@ var Board = (function() {
        this.ctxMem.fillRect(0, 0, this.dom.width, this.dom.height);
      }
    };
+
+    // Update: Removed fitToWindow function since we are using a fixed-size canvas
+    // var fitToWindow = function fitToWindow() { ... }
 
    return boardObject;
 })();

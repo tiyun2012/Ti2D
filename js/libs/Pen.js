@@ -3,22 +3,35 @@
 var Pen = (function() {
   var pen = {
     colors: {
-      fg: '#555',
-      bg: '#FFF'
+      fg: '#64005c',  // Default drawing color
+      bg: '#FFF'      // Eraser color (background color)
     },
-    lineWidth: 4,
+    lineWidth: 4,  // Default brush size (for both drawing and erasing)
     type: 'mouse',
     lineJoin: 'round',
     funcType: null,
     funcTypes: {
       draw: 'draw',
       erase: 'draw erase',
-      menu: 'menu'
+      // Removed 'menu' since we are disabling Ctrl + clear functionality
+      // menu: 'menu'
     },
     init: function init(context) {
       context.lineJoin = this.lineJoin;
       context.lineWidth = this.lineWidth;
-      context.strokeStyle = this.color;
+      context.strokeStyle = this.colors.fg;  // Set the brush color initially
+
+      // Add event listener to the slider for dynamic brush size (used for both drawing and erasing)
+      var slider = document.getElementById('brush-size-slider');
+      slider.addEventListener('input', function() {
+        pen.lineWidth = slider.value;  // Update brush size based on slider value
+      });
+
+      // Add event listener to the color picker for dynamic brush color
+      var colorPicker = document.getElementById('color-picker');
+      colorPicker.addEventListener('input', function() {
+        pen.colors.fg = colorPicker.value;  // Update brush color based on the picker value
+      });
     },
     set: function set(context, config) {
       context.lineWidth = config.lineWidth;
@@ -26,24 +39,29 @@ var Pen = (function() {
       context.lineJoin = this.lineJoin;
     },
     setFuncType: function setFuncType(pointerEvent) {
-      if      (checkMenuKey(pointerEvent)) this.funcType = this.funcTypes.menu;
-      else if (checkEraseKeys(pointerEvent)) this.funcType = this.funcTypes.erase;
-      else this.funcType = this.funcTypes.draw;
+      // Removed checkMenuKey, so Ctrl + click doesn't trigger the menu/clear
+      // Check for erase or draw functionality only
+      if (checkEraseKeys(pointerEvent)) {
+        this.funcType = this.funcTypes.erase;
+      } else {
+        this.funcType = this.funcTypes.draw;
+      }
       return this.funcType;
     },
     setPen: function setPen(context, pointerEvent) {
       switch(this.funcType) {
         case this.funcTypes.erase: {
+          // Dynamic eraser size based on the same brush size slider
           this.set(context, {
-            color: this.colors.bg,
-            lineWidth: 25
+            color: this.colors.bg,  // Set to background color (eraser)
+            lineWidth: this.lineWidth  // Dynamic eraser size
           });
           break;
         }
         case this.funcTypes.draw: {
           this.set(context, {
-            color: this.colors.fg,
-            lineWidth: getLineWidth(pointerEvent)
+            color: this.colors.fg,  // Use the selected drawing color
+            lineWidth: this.lineWidth  // Dynamic brush size for drawing
           });
           break;
         }
@@ -54,31 +72,12 @@ var Pen = (function() {
     }
   }
 
-  var getLineWidth = function getLineWidth(e) {
-    switch (e.pointerType) {
-      case 'touch': {
-        if (e.width < 10 && e.height < 10) {
-          return (e.width + e.height) * 2 + 10;
-        } else {
-          return (e.width + e.height - 40) / 2;
-        }
-      }
-      case 'pen': return e.pressure * 8;
-      default: return (e.pressure) ? e.pressure * 8 : 4;
-    }
-  }
+  // Removed checkMenuKey since we no longer need it for Ctrl + clear functionality
 
   var checkEraseKeys = function checkEraseKeys(e) {
     if (e.buttons === 32) return true;
     else if (e.buttons === 1 && e.shiftKey) return true;
     return false;
-  }
-  var checkMenuKey = function checkMenuKey(e) {
-    return (e.buttons === 1 && e.ctrlKey);
-  }
-
-  function openMenu(e) {
-    console.log('Menu', e.pageX, e.pageY);
   }
 
   return pen;
